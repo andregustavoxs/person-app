@@ -5,11 +5,14 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MemberResource\Pages;
 use App\Models\Member;
 use App\Models\Person;
+use App\Models\Employee;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
 
 class MemberResource extends Resource
 {
@@ -18,6 +21,11 @@ class MemberResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     protected static ?int $navigationSort = 2;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['person']);
+    }
 
     public static function form(Form $form): Form
     {
@@ -31,8 +39,51 @@ class MemberResource extends Resource
                             ->maxLength(14)
                             ->mask('999.999.999-99')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                            ->disabled(fn ($livewire) => $livewire instanceof Pages\EditMember)
+                            ->dehydrated(fn ($livewire) => !($livewire instanceof Pages\EditMember))
+                            ->beforeStateDehydrated(function ($state, callable $get, callable $set) {
                                 $person = Person::where('cpf', $state)->first();
+                                if ($person) {
+                                    $set('person_id', $person->id);
+                                }
+                            })
+                            ->afterStateHydrated(function ($state, $record, callable $set) {
+                                if ($record && $record->person) {
+                                    $set('person.cpf', $record->person->cpf);
+                                    $set('person.name', $record->person->name);
+                                }
+                            })
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if (!$state) return;
+
+                                $person = Person::where('cpf', $state)->first();
+                                
+                                // Check if CPF exists in Members or Employees
+                                $existingMember = Member::whereHas('person', function ($query) use ($state) {
+                                    $query->where('cpf', $state);
+                                })->first();
+                                
+                                $existingEmployee = Employee::whereHas('person', function ($query) use ($state) {
+                                    $query->where('cpf', $state);
+                                })->first();
+
+                                if ($existingMember || $existingEmployee) {
+                                    Notification::make()
+                                        ->warning()
+                                        ->title('Member or Employee already registered')
+                                        ->body('A person with this CPF is already registered in the system.')
+                                        ->persistent()
+                                        ->send();
+
+                                    // Clear the form fields
+                                    $set('person.cpf', '');
+                                    $set('person.name', '');
+                                    $set('person_id', null);
+                                    $set('registration_number', '');
+                                    $set('member_type', null);
+                                    return;
+                                }
+
                                 if ($person) {
                                     $set('person.name', $person->name);
                                     $set('person_id', $person->id);
@@ -41,7 +92,7 @@ class MemberResource extends Resource
                         Forms\Components\TextInput::make('person.name')
                             ->required()
                             ->maxLength(255)
-                            ->hidden(fn (Forms\Get $get) => !$get('person.cpf')),
+                            ->live(onBlur: true),
                         Forms\Components\Hidden::make('person_id'),
                     ]),
                 Forms\Components\TextInput::make('registration_number')
