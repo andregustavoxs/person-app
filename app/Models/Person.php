@@ -14,6 +14,7 @@ class Person extends Model
     protected $fillable = [
         'name',
         'cpf',
+        'email',
     ];
 
     public function employee()

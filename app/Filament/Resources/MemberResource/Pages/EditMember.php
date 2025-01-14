@@ -18,6 +18,7 @@ class EditMember extends EditRecord
             $data['person'] = [
                 'cpf' => $this->record->person->cpf,
                 'name' => $this->record->person->name,
+                'email' => $this->record->person->email,
             ];
         }
 
@@ -26,16 +27,27 @@ class EditMember extends EditRecord
 
     protected function afterSave(): void
     {
-        // Update the person's name if it has changed
-        if ($this->data['person']['name'] !== $this->record->person->name) {
-            $person = $this->record->person;
+        // Update the person's name and email if they have changed
+        $person = $this->record->person;
+        $changed = false;
+
+        if ($this->data['person']['name'] !== $person->name) {
             $person->name = $this->data['person']['name'];
+            $changed = true;
+        }
+
+        if (($this->data['person']['email'] ?? null) !== $person->email) {
+            $person->email = $this->data['person']['email'];
+            $changed = true;
+        }
+
+        if ($changed) {
             $person->save();
 
             Notification::make()
                 ->success()
                 ->title('Person updated')
-                ->body('The person\'s name has been updated successfully.')
+                ->body('The person\'s information has been updated successfully.')
                 ->send();
         }
     }

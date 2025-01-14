@@ -35,6 +35,10 @@ class PersonResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\TextInput::make('email')
+                    ->email()
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true),
             ]);
     }
 
@@ -46,6 +50,8 @@ class PersonResource extends Resource
                     ->label('CPF')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

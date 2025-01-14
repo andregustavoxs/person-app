@@ -78,6 +78,7 @@ class MemberResource extends Resource
                                     // Clear the form fields
                                     $set('person.cpf', '');
                                     $set('person.name', '');
+                                    $set('person.email', '');
                                     $set('person_id', null);
                                     $set('registration_number', '');
                                     $set('member_type', null);
@@ -86,6 +87,7 @@ class MemberResource extends Resource
 
                                 if ($person) {
                                     $set('person.name', $person->name);
+                                    $set('person.email', $person->email);
                                     $set('person_id', $person->id);
                                 }
                             }),
@@ -93,6 +95,9 @@ class MemberResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true),
+                        Forms\Components\TextInput::make('person.email')
+                            ->email()
+                            ->maxLength(255),
                         Forms\Components\Hidden::make('person_id'),
                     ]),
                 Forms\Components\TextInput::make('registration_number')
@@ -118,6 +123,9 @@ class MemberResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('person.name')
                     ->label('Name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('person.email')
+                    ->label('Email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('registration_number')
                     ->searchable(),

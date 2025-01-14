@@ -73,6 +73,9 @@ class EmployeeResource extends Resource
                             ->required()
                             ->maxLength(255),
                             // ->hidden(fn (Forms\Get $get) => !$get('person.cpf')),
+                        Forms\Components\TextInput::make('person.email')
+                            ->email()
+                            ->maxLength(255),
                         Forms\Components\Hidden::make('person_id'),
                     ]),
                 Forms\Components\DatePicker::make('hire_date')
@@ -92,6 +95,9 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('person.name')
                     ->label('Name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('person.email')
+                    ->label('Email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('hire_date')
                     ->date()

@@ -16,6 +16,7 @@ class CreateMember extends CreateRecord
             $person = Person::create([
                 'name' => $data['person']['name'],
                 'cpf' => $data['person']['cpf'],
+                'email' => $data['person']['email'] ?? null,
             ]);
             $data['person_id'] = $person->id;
         }
